@@ -335,9 +335,10 @@ export function ChatProvider({ children }) {
   async function handlePacket(packet) {
     if (packet.type === "handshake") return receiveHandshake(packet);
     if (packet.type === "message") return receiveMessage(packet);
-    if (packet.type === "ack") return addSystemMessage(packet.sender, packet.reason || "ACK");
+    if (packet.type === "ack") return; // Ẩn ACK khỏi màn hình luôn cho sạch
     if (packet.type === "nack" || packet.type === "error") {
-      return addSystemMessage(packet.sender || activeFriend?.chat_id, packet.reason || packet.message || "NACK");
+      console.warn("[SecureChat] Packet rejected:", packet.reason || packet.message);
+      return; // Không hiển thị NACK ra UI
     }
   }
 

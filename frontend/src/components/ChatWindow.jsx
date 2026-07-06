@@ -5,7 +5,7 @@ import { useChat } from "../state/ChatContext.jsx";
 import { ChevronLeft, Search, Menu, MessageSquare } from 'lucide-react';
 
 export function ChatWindow() {
-  const { activeFriend, activeMessages, setActiveFriend, setGroupInfoOpen } = useChat();
+  const { activeFriend, activeMessages, setActiveFriend, setGroupInfoOpen, friends } = useChat();
   const bottomRef = useRef(null);
   
   const isGroup = activeFriend?.chat_id?.startsWith("group:");
@@ -44,9 +44,14 @@ export function ChatWindow() {
       </header>
 
       <div className="message-timeline">
-        {activeMessages.map((message, index) => (
-          <MessageBubble key={`${message.at}-${index}`} message={message} isGroup={isGroup} />
-        ))}
+        {activeMessages.map((message, index) => {
+          let senderName = message.senderId;
+          if (isGroup && !message.mine && !message.system) {
+            const friend = friends.find(f => f.chat_id === message.senderId);
+            if (friend) senderName = friend.display_name || friend.username;
+          }
+          return <MessageBubble key={`${message.at}-${index}`} message={{...message, senderName}} isGroup={isGroup} />
+        })}
         <div ref={bottomRef} />
       </div>
 

@@ -42,7 +42,7 @@ export function MessageBubble({ message, isGroup }) {
       <div className={className}>
         {isGroup && !message.mine && !message.system && (
           <div style={{ fontSize: '11px', color: '#a0a0a0', marginBottom: '2px', fontWeight: 'bold' }}>
-            {message.senderId}
+            {message.senderName || message.senderId}
           </div>
         )}
         {content}

@@ -4,7 +4,7 @@ import { X } from 'lucide-react';
 const COLORS = ["#2aabee", "#19a974", "#7c3aed", "#f97316", "#e11d48", "#0891b2"];
 
 export function ProfileModal() {
-  const { profileOpen, setProfileOpen, profileForm, setProfileForm, updateProfile } = useChat();
+  const { profileOpen, setProfileOpen, profileForm, setProfileForm, updateProfile, user } = useChat();
 
   if (!profileOpen) return null;
 
@@ -16,6 +16,16 @@ export function ProfileModal() {
           <button className="icon-button" onClick={() => setProfileOpen(false)}><X size={24} /></button>
         </header>
         <form onSubmit={updateProfile}>
+          <div className="form-group">
+            <label>ID của bạn (Copy gửi cho bạn bè để kết bạn)</label>
+            <input
+              value={user?.chat_id || ""}
+              readOnly
+              onClick={e => { e.target.select(); navigator.clipboard.writeText(user?.chat_id || ""); }}
+              title="Bấm để copy"
+              style={{ cursor: 'pointer', background: 'rgba(0,0,0,0.3)', color: 'var(--neon-blue)', fontWeight: 'bold' }}
+            />
+          </div>
           <div className="form-group">
             <label>Tên hiển thị</label>
             <input

@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <title>Bao cao bai tap lon</title>
+  <style>
+    body { font-family: Arial, sans-serif; color: #17202a; line-height: 1.55; margin: 40px; }
+    h1, h2, h3 { color: #0f4c81; page-break-after: avoid; }
+    h1 { font-size: 28px; border-bottom: 2px solid #0f4c81; padding-bottom: 10px; }
+    h2 { font-size: 21px; margin-top: 28px; }
+    h3 { font-size: 17px; }
+    p, li { font-size: 12.5px; }
+    code { background: #f1f5f9; padding: 2px 4px; border-radius: 4px; }
+    pre { background: #0f172a; color: #e2e8f0; padding: 14px; border-radius: 6px; overflow-wrap: anywhere; white-space: pre-wrap; }
+    table { width: 100%; border-collapse: collapse; margin: 8px 0; page-break-inside: avoid; }
+    th, td { border: 1px solid #cbd5e1; padding: 7px; font-size: 11.5px; text-align: left; }
+    th { background: #eaf2f8; }
+    img { max-width: 100%; border: 1px solid #cbd5e1; border-radius: 6px; margin: 12px 0; }
+  </style>
+</head>
+<body>
+<h1>Bao cao bai tap lon</h1>
+<h2>De tai 16: Ung dung bao mat tin nhan van ban voi ma hoa AES va xac thuc RSA</h2>
+<p><strong>Hoc phan:</strong> Nhap mon an toan bao mat thong tin  </p>
+<p><strong>Nam hoc:</strong> Hoc ki 3 nam hoc 2025-2026  </p>
+<p><strong>Thu muc du an:</strong> <code>D:\My\ATBMTT</code>  </p>
+<p><strong>Ngay cap nhat:</strong> 25/05/2026</p>
+<p>---</p>
+<h2>1. Gioi thieu bai toan</h2>
+<p>Ung dung chat van ban qua mang co nguy co bi nghe len, sua doi, gia mao nguoi gui va gui lai goi tin cu. De tai yeu cau xay dung ung dung bao mat tin nhan bang AES-256-CBC, RSA-2048 va SHA-256. He thong can dam bao tinh bi mat, tinh toan ven, xac thuc nguoi gui va co phan hoi ACK/NACK khi packet hop le hoac bi loi bao mat.</p>
+<p>Du an hien tai xay dung ung dung chat that qua WebSocket relay. Moi nguoi dung mo mot tab rieng, tu sinh khoa RSA, dang ky public key len server, gui handshake va message packet qua server trung gian.</p>
+<p>---</p>
+<h2>2. Yeu cau de tai</h2>
+<table><tr><th>Nhom yeu cau</th><th>Noi dung</th></tr></table>
+<table><tr><td>Ma hoa noi dung</td><td>AES 256-bit, che do CBC</td></tr></table>
+<table><tr><td>Trao doi khoa</td><td>RSA 2048-bit</td></tr></table>
+<table><tr><td>Xac thuc</td><td>Chu ky so RSA</td></tr></table>
+<table><tr><td>Padding/hash theo de</td><td>PKCS#1 v1.5 + SHA-256</td></tr></table>
+<table><tr><td>Kiem tra toan ven</td><td>SHA-256</td></tr></table>
+<table><tr><td>Goi tin</td><td>IV, ciphertext, hash, signature</td></tr></table>
+<table><tr><td>Phan hoi</td><td>ACK neu hop le, NACK neu loi integrity/auth</td></tr></table>
+<table><tr><td>Bo sung</td><td>Anti-replay, test case tan cong, benchmark, threat model</td></tr></table>
+<p>---</p>
+<h2>3. Muc tieu bao mat</h2>
+<h3>3.1. Tinh bi mat</h3>
+<p>Noi dung tin nhan duoc ma hoa bang AES-256-CBC truoc khi truyen. Server khong nhan plaintext va khong nam giu khoa AES.</p>
+<h3>3.2. Tinh toan ven</h3>
+<p>Receiver tinh lai:</p>
+<pre><code>
+SHA-256(IV || ciphertext)
+</code></pre>
+<p>Neu hash tinh lai khac hash trong packet, receiver tu choi va gui NACK.</p>
+<h3>3.3. Xac thuc</h3>
+<p>Sender ky metadata va payload message bang RSA/SHA-256. Receiver dung public key cua sender de verify signature.</p>
+<h3>3.4. Anti-replay</h3>
+<p>Moi message co <code>session_id</code> va <code>sequence_number</code>. Receiver luu sequence number da xu ly. Neu packet cu bi gui lai, receiver phat hien va NACK.</p>
+<h3>3.5. Packet het han</h3>
+<p>Moi packet co <code>timestamp</code>. Ung dung tu choi packet co timestamp qua cu de mo phong yeu cau het han/sai quyen trong huong dan bo sung.</p>
+<p>---</p>
+<h2>4. Kien truc he thong</h2>
+<pre><code>
+flowchart LR
+    A[&quot;Nguoi dung 1\nClient crypto&quot;] --&gt; S[&quot;Relay/Server&quot;]
+    S --&gt; B[&quot;Nguoi dung 2\nClient crypto&quot;]
+    B --&gt; S
+    S --&gt; A
+</code></pre>
+<p>Trong ban trien khai hien tai, moi nguoi dung dang nhap bang ID ca nhan tren mot tab rieng. Backend FastAPI serve frontend, luu public key in-memory va relay WebSocket packet giua cac client.</p>
+<h3>Cau truc thu muc</h3>
+<pre><code>
+D:\My\ATBMTT
+├── docs/
+│   ├── benchmark-report.md
+│   ├── protocol-design.md
+│   ├── test-cases.md
+│   └── threat-model.md
+├── report/
+│   └── bao_cao_bai_tap_lon.md
+├── server/
+├── static/
+│   ├── real.html
+│   ├── css/style.css
+│   └── js/
+│       ├── crypto_utils.js
+│       └── real_chat.js
+├── requirements.txt
+├── setup_env.ps1
+├── start.ps1
+└── start.bat
+</code></pre>
+<p>---</p>
+<h2>5. Threat model</h2>
+<table><tr><th>Moi nguy</th><th>Mo ta</th><th>Co che phong thu trong ung dung</th></tr></table>
+<table><tr><td>Nghe len</td><td>Doc packet tren duong truyen</td><td>AES-256-CBC</td></tr></table>
+<table><tr><td>Sua ciphertext</td><td>Thay doi du lieu ma hoa</td><td>SHA-256 hash mismatch</td></tr></table>
+<table><tr><td>Gia mao nguoi gui</td><td>Tao packet gia</td><td>RSA signature verify</td></tr></table>
+<table><tr><td>Replay</td><td>Gui lai packet cu</td><td>sequence_number</td></tr></table>
+<table><tr><td>Sai nguoi nhan</td><td>Chuyen packet cho user khac</td><td>RSA decrypt AES key fail</td></tr></table>
+<table><tr><td>Packet cu</td><td>Timestamp qua han</td><td>timestamp window</td></tr></table>
+<table><tr><td>MITM public key</td><td>Server phan phoi public key gia</td><td>Ghi nhan la han che, can fingerprint/QR</td></tr></table>
+<p>Gia dinh bao mat: server duoc tin tuong trong viec phan phoi public key. Trong san pham that, can co fingerprint hoac QR code de xac minh public key ngoai kenh.</p>
+<p>---</p>
+<h2>6. Thuat toan va thu vien</h2>
+<table><tr><th>Thanh phan</th><th>Cong nghe</th></tr></table>
+<table><tr><td>Backend</td><td>Python FastAPI</td></tr></table>
+<table><tr><td>Server runtime</td><td>Uvicorn</td></tr></table>
+<table><tr><td>Database</td><td>SQLite</td></tr></table>
+<table><tr><td>Frontend</td><td>HTML, CSS, JavaScript</td></tr></table>
+<table><tr><td>AES</td><td>Web Crypto API AES-CBC 256-bit</td></tr></table>
+<table><tr><td>RSA</td><td>node-forge RSA-2048 PKCS#1 v1.5 + SHA-256</td></tr></table>
+<table><tr><td>Hash</td><td>SHA-256</td></tr></table>
+<p>Luu y ky thuat: Web Crypto API tren browser khong ho tro day du RSAES-PKCS1-v1_5 encryption, vi vay du an dung <code>node-forge</code> cho RSA PKCS#1 v1.5. AES-CBC va SHA-256 van dung Web Crypto API cua trinh duyet.</p>
+<p>---</p>
+<h2>7. Thiet ke giao thuc</h2>
+<h3>7.1. Handshake</h3>
+<pre><code>
+sequenceDiagram
+    participant A as Nguoi dung 1
+    participant S as Relay
+    participant B as Nguoi dung 2
+
+    A-&gt;&gt;A: Tao RSA keypair
+    B-&gt;&gt;B: Tao RSA keypair
+    A-&gt;&gt;B: Trao doi public key
+    A-&gt;&gt;A: Tao AES session key
+    A-&gt;&gt;A: Ky metadata UserID + session_id
+    A-&gt;&gt;A: Ma hoa AES key bang public key cua nguoi nhan
+    A-&gt;&gt;S: Handshake packet
+    S-&gt;&gt;B: Relay handshake
+    B-&gt;&gt;B: Verify signature va giai ma AES key
+</code></pre>
+<h3>7.2. Gui message</h3>
+<pre><code>
+sequenceDiagram
+    participant A as Nguoi dung 1
+    participant S as Relay
+    participant B as Nguoi dung 2
+
+    A-&gt;&gt;A: AES-256-CBC encrypt
+    A-&gt;&gt;A: SHA-256(IV || ciphertext)
+    A-&gt;&gt;A: RSA sign payload
+    A-&gt;&gt;S: Message packet
+    S-&gt;&gt;B: Relay packet
+    B-&gt;&gt;B: Check timestamp
+    B-&gt;&gt;B: Check replay
+    B-&gt;&gt;B: Verify hash
+    B-&gt;&gt;B: Verify signature
+    B-&gt;&gt;B: AES decrypt
+    B-&gt;&gt;A: ACK/NACK
+</code></pre>
+<p>Thu tu xu ly tai receiver:</p>
+<p>Kiem tra timestamp.</p>
+<p>Kiem tra replay bang sequence number.</p>
+<p>Kiem tra hash.</p>
+<p>Kiem tra chu ky.</p>
+<p>Giai ma AES.</p>
+<p>Hien thi message va gui ACK.</p>
+<p>---</p>
+<h2>8. Chuc nang da cai dat</h2>
+<table><tr><th>Chuc nang</th><th>Trang thai</th></tr></table>
+<table><tr><td>Giao dien chat that 2 tab</td><td>Da co</td></tr></table>
+<table><tr><td>Server relay WebSocket o giua</td><td>Da co</td></tr></table>
+<table><tr><td>Luu public key va security log bang SQLite</td><td>Da co</td></tr></table>
+<table><tr><td>Nhieu ket noi WebSocket cho cung mot user</td><td>Da co</td></tr></table>
+<table><tr><td>Tao RSA keypair client-side</td><td>Da co</td></tr></table>
+<table><tr><td>Tao AES key va IV</td><td>Da co</td></tr></table>
+<table><tr><td>Ma hoa AES-256-CBC</td><td>Da co</td></tr></table>
+<table><tr><td>SHA-256 integrity hash</td><td>Da co</td></tr></table>
+<table><tr><td>Ky va verify payload</td><td>Da co</td></tr></table>
+<table><tr><td>ACK/NACK trong ung dung</td><td>Da co</td></tr></table>
+<table><tr><td>Chua replay bang sequence number</td><td>Da co</td></tr></table>
+<table><tr><td>Tu choi packet het han</td><td>Da co</td></tr></table>
+<table><tr><td>Che do 2 tab WebSocket that</td><td>Da co</td></tr></table>
+<table><tr><td>Kiem thu sua ciphertext qua WebSocket</td><td>Da co</td></tr></table>
+<table><tr><td>Kiem thu sai chu ky qua WebSocket</td><td>Da co</td></tr></table>
+<table><tr><td>Kiem thu packet het han qua WebSocket</td><td>Da co</td></tr></table>
+<table><tr><td>Kiem thu replay qua WebSocket</td><td>Da co</td></tr></table>
+<table><tr><td>Tai lieu threat model</td><td>Da co</td></tr></table>
+<table><tr><td>Tai lieu test cases</td><td>Da co</td></tr></table>
+<table><tr><td>Tai lieu benchmark</td><td>Da co</td></tr></table>
+<table><tr><td>Checklist trien khai</td><td>Da co</td></tr></table>
+<p>---</p>
+<h2>9. Kich ban chay that</h2>
+<p>Mo trinh duyet tai:</p>
+<pre><code>
+http://127.0.0.1:8010/
+</code></pre>
+<p>Moi nguoi dung mo trang ung dung, nhap ID ca nhan va ID nguoi nhan:</p>
+<pre><code>
+http://127.0.0.1:8010/
+</code></pre>
+<p>Tai moi tab bam <code>Dang nhap / ket noi</code>, sau do gui tin. Server o giua chi relay packet va hien packet gan nhat, khong doc plaintext.</p>
+<h3>Anh minh chung giao dien</h3>
+<p><img src="../submission/screenshot-secure-chat.png" alt="Giao dien Secure Chat chay that"></p>
+<p>---</p>
+<h2>10. Kiem thu bao mat</h2>
+<table><tr><th>Test case</th><th>Dau vao</th><th>Ket qua mong doi</th></tr></table>
+<table><tr><td>TC01</td><td>Message hop le</td><td>ACK</td></tr></table>
+<table><tr><td>TC02</td><td>Peer offline</td><td>NACK user offline</td></tr></table>
+<table><tr><td>TC03</td><td>Gui tin hai chieu</td><td>Moi ben nhan duoc plaintext dung</td></tr></table>
+<table><tr><td>TC04</td><td>Sender mismatch qua packet thu cong</td><td>Server NACK sender mismatch</td></tr></table>
+<table><tr><td>TC05</td><td>Sua ciphertext</td><td>Receiver NACK integrity</td></tr></table>
+<table><tr><td>TC06</td><td>Sai chu ky</td><td>Receiver NACK signature</td></tr></table>
+<table><tr><td>TC07</td><td>Packet het han</td><td>Receiver NACK expired</td></tr></table>
+<table><tr><td>TC08</td><td>Replay packet</td><td>Receiver NACK replay</td></tr></table>
+<table><tr><td>TC09</td><td>Crypto self-test</td><td><code>npm run test:crypto</code> thanh cong</td></tr></table>
+<table><tr><td>TC10</td><td>WebSocket relay self-test</td><td><code>npm run test:relay</code> thanh cong</td></tr></table>
+<p>---</p>
+<h2>11. Huong dan cai dat</h2>
+<pre><code>
+cd D:\My\ATBMTT
+.\setup_env.ps1
+.\start.ps1
+</code></pre>
+<p>Neu PowerShell chan script:</p>
+<pre><code>
+powershell -ExecutionPolicy Bypass -File .\start.ps1
+</code></pre>
+<p>Kiem tra lop crypto rieng:</p>
+<pre><code>
+npm run check:js
+npm run test:crypto
+npm run test:relay
+</code></pre>
+<p>Che do trien khai that:</p>
+<pre><code>
+http://127.0.0.1:8010/
+</code></pre>
+<p>---</p>
+<h2>12. Han che va huong phat trien</h2>
+<p>Han che con lai:</p>
+<ul>
+<li>Public key distribution mac dinh tin tuong server.</li>
+<li>Log server hien luu in-memory, chua co database.</li>
+</ul>
+<p>Huong phat trien:</p>
+<ul>
+<li>Luu security log tren server.</li>
+<li>Them database public key fingerprint.</li>
+<li>Them QR/fingerprint public key de giam MITM.</li>
+<li>Them export benchmark thanh file.</li>
+<li>Mo rong che do WebSocket de ho tro phong chat nhieu nguoi va luu log dai han.</li>
+</ul>
+<p>---</p>
+<h2>13. Ket luan</h2>
+<p>Du an da xay dung duoc ung dung chat bao mat chay that qua WebSocket relay theo de tai 16. Lop RSA dung <code>node-forge</code> de bam sat RSA-2048 PKCS#1 v1.5 + SHA-256; AES-CBC va SHA-256 duoc xu ly bang Web Crypto API. San pham hien cho phep moi nguoi dang nhap bang ID ca nhan, mo nhieu tab/client that va trao doi packet qua server trung gian chi relay, khong doc plaintext.</p>
+</body>
+</html>

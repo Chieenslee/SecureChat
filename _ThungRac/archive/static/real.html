@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure Chat Pro - Web App</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        /* Modern Web App Layout */
+        body {
+            background-color: var(--bg-app);
+            color: var(--text-primary);
+            font-family: var(--font-main);
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            overflow: hidden;
+            background-image: radial-gradient(circle at 10% 20%, rgba(108, 99, 255, 0.05) 0%, transparent 40%),
+                              radial-gradient(circle at 90% 80%, rgba(0, 200, 150, 0.05) 0%, transparent 40%);
+        }
+
+        /* --- SIDEBAR MENU --- */
+        .sidebar-menu {
+            width: 70px;
+            background-color: rgba(20, 20, 31, 0.8);
+            -webkit-backdrop-filter: blur(10px);
+            backdrop-filter: blur(10px);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px 0;
+            z-index: 100;
+            box-shadow: 2px 0 15px rgba(0,0,0,0.2);
+        }
+
+        .brand-icon {
+            width: 44px;
+            height: 44px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: white;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 15px rgba(108, 99, 255, 0.4);
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-5px); }
+            100% { transform: translateY(0px); }
+        }
+
+        .menu-items {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            flex: 1;
+            width: 100%;
+            align-items: center;
+        }
+
+        .menu-item {
+            width: 48px;
+            height: 48px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            background: transparent;
+            border: none;
+            position: relative;
+        }
+
+        .menu-item:hover {
+            color: white;
+            background-color: rgba(255, 255, 255, 0.05);
+            transform: scale(1.1);
+        }
+
+        .menu-item.active {
+            color: white;
+            background-color: var(--primary);
+            box-shadow: 0 4px 15px rgba(108, 99, 255, 0.4);
+        }
+
+        .menu-item.active::before {
+            content: '';
+            position: absolute;
+            left: -11px;
+            top: 50%;
+            transform: translateY(-50%);
+            height: 20px;
+            width: 4px;
+            background-color: white;
+            border-radius: 0 4px 4px 0;
+        }
+
+        /* Tooltip */
+        .menu-item::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            left: 60px;
+            background-color: #000;
+            color: #fff;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: 0.2s;
+            transform: translateX(-10px);
+            z-index: 1000;
+        }
+
+        .menu-item:hover::after {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        /* --- MAIN APP AREA --- */
+        .app-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .topbar {
+            height: 60px;
+            background-color: rgba(20, 20, 31, 0.6);
+            -webkit-backdrop-filter: blur(10px);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+            flex-shrink: 0;
+        }
+
+        .topbar-title {
+            font-size: 18px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background-color: rgba(255, 209, 102, 0.1);
+            color: var(--accent-yellow);
+            border: 1px solid rgba(255, 209, 102, 0.2);
+            transition: all 0.3s;
+        }
+        
+        .status-badge.connected {
+            background-color: rgba(0, 200, 150, 0.1);
+            color: var(--accent-green);
+            border-color: rgba(0, 200, 150, 0.2);
+            box-shadow: 0 0 10px rgba(0, 200, 150, 0.2);
+        }
+
+        /* --- VIEWS --- */
+        .view-section {
+            flex: 1;
+            display: none;
+            overflow: hidden;
+            animation: fadeInView 0.4s ease-out forwards;
+        }
+
+        .view-section.active {
+            display: flex;
+        }
+
+        @keyframes fadeInView {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* --- CHAT VIEW (SPLIT LAYOUT) --- */
+        .chat-layout {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .chat-sidebar {
+            width: 320px;
+            background-color: var(--bg-sidebar);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            z-index: 10;
+        }
+
+        .chat-main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background-color: var(--bg-app);
+            position: relative;
+        }
+
+        /* Config / Contact area */
+        .config-card {
+            padding: 20px;
+            background: linear-gradient(180deg, rgba(28,28,48,1) 0%, rgba(20,20,31,0) 100%);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .avatar-container {
+            position: relative;
+        }
+
+        .avatar-gif {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid var(--primary);
+            padding: 2px;
+            background-color: #000;
+        }
+
+        .online-dot {
+            position: absolute;
+            bottom: 2px;
+            right: 2px;
+            width: 12px;
+            height: 12px;
+            background-color: var(--accent-green);
+            border: 2px solid var(--bg-sidebar);
+            border-radius: 50%;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        .input-group label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .input-group input {
+            background-color: var(--bg-input);
+            border: 1px solid var(--border-light);
+            color: white;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(108, 99, 255, 0.2);
+        }
+
+        .btn {
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-size: 14px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            box-shadow: 0 4px 15px rgba(108, 99, 255, 0.3);
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(108, 99, 255, 0.4);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background: var(--border-light);
+            box-shadow: none;
+        }
+
+        .btn-danger {
+            background-color: rgba(255, 77, 109, 0.1);
+            color: var(--accent-red);
+            border: 1px solid rgba(255, 77, 109, 0.3);
+        }
+
+        .btn-danger:hover:not(:disabled) {
+            background-color: rgba(255, 77, 109, 0.2);
+            transform: translateY(-2px);
+        }
+
+        /* Chat Area */
+        .chat-header {
+            padding: 15px 24px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            background-color: var(--bg-sidebar);
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 24px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            scroll-behavior: smooth;
+        }
+
+        .message-bubble {
+            max-width: 70%;
+            padding: 12px 18px;
+            border-radius: 18px;
+            font-size: 14px;
+            line-height: 1.5;
+            position: relative;
+            animation: bubblePop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            transform-origin: bottom left;
+        }
+
+        @keyframes bubblePop {
+            0% { transform: scale(0.8); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .message-bubble.mine {
+            align-self: flex-end;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            border-bottom-right-radius: 4px;
+            transform-origin: bottom right;
+            box-shadow: 0 4px 15px rgba(108, 99, 255, 0.2);
+        }
+
+        .message-bubble.peer {
+            align-self: flex-start;
+            background-color: var(--bg-message-in);
+            color: var(--text-primary);
+            border-bottom-left-radius: 4px;
+            border: 1px solid var(--border);
+        }
+
+        .message-bubble.system {
+            align-self: center;
+            background-color: rgba(255, 209, 102, 0.1);
+            color: var(--accent-yellow);
+            border: 1px solid rgba(255, 209, 102, 0.2);
+            font-size: 12px;
+            border-radius: 8px;
+            text-align: center;
+            max-width: 90%;
+        }
+
+        .message-sender {
+            font-size: 11px;
+            font-weight: 600;
+            margin-bottom: 4px;
+            opacity: 0.7;
+        }
+
+        /* Composer */
+        .chat-composer {
+            padding: 20px 24px;
+            background-color: var(--bg-sidebar);
+            border-top: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .composer-input {
+            flex: 1;
+            background-color: var(--bg-input);
+            border: 1px solid var(--border-light);
+            border-radius: 24px;
+            padding: 14px 20px;
+            color: white;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .composer-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(108, 99, 255, 0.1);
+        }
+
+        .btn-send {
+            width: 46px;
+            height: 46px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 15px rgba(108, 99, 255, 0.4);
+        }
+
+        .btn-send:hover:not(:disabled) {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(108, 99, 255, 0.6);
+        }
+        .btn-send:disabled {
+            background: var(--border-light);
+            box-shadow: none;
+            cursor: not-allowed;
+            color: var(--text-muted);
+        }
+
+        /* --- SERVER LAB VIEW --- */
+        .server-lab-layout {
+            padding: 30px;
+            overflow-y: auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            height: 100%;
+        }
+
+        .card {
+            background-color: var(--bg-sidebar);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin: 0 0 20px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--primary);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-box {
+            background-color: var(--bg-app);
+            padding: 15px;
+            border-radius: 12px;
+            border: 1px solid var(--border-light);
+            text-align: center;
+        }
+        .stat-box .value { font-size: 24px; font-weight: 700; color: white; margin-bottom: 5px; }
+        .stat-box .label { font-size: 11px; color: var(--text-secondary); text-transform: uppercase; }
+
+        .json-preview {
+            background-color: #0d0d14;
+            border: 1px solid #222233;
+            border-radius: 12px;
+            padding: 15px;
+            color: var(--accent-green);
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            overflow-x: auto;
+            height: 250px;
+            overflow-y: auto;
+        }
+
+        .attack-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        /* Invisible containers to keep real_chat.js working */
+        .hidden-legacy {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <!-- SIDEBAR MENU -->
+    <nav class="sidebar-menu">
+        <div class="brand-icon"><i class="fa-solid fa-shield-halved"></i></div>
+        <div class="menu-items">
+            <button class="menu-item active" data-view="view-chat" data-tooltip="Trò chuyện E2EE" aria-label="Trò chuyện E2EE">
+                <i class="fa-solid fa-message" aria-hidden="true"></i>
+            </button>
+            <button class="menu-item" data-view="view-server" data-tooltip="Server Relay & Lab" aria-label="Server Relay và Attack Lab">
+                <i class="fa-solid fa-server" aria-hidden="true"></i>
+            </button>
+            <button class="menu-item" data-view="view-peer" data-tooltip="Peer Client (Giả lập nhận)" aria-label="Peer Client giả lập nhận">
+                <i class="fa-solid fa-users-viewfinder" aria-hidden="true"></i>
+            </button>
+        </div>
+        <div class="menu-items" style="flex: 0; margin-top: auto;">
+            <a href="/" class="menu-item" data-tooltip="Quay lại Trang chủ">
+                <i class="fa-solid fa-house"></i>
+            </a>
+        </div>
+    </nav>
+
+    <!-- MAIN APP CONTAINER -->
+    <div class="app-container">
+        <!-- TOPBAR -->
+        <header class="topbar">
+            <div class="topbar-title" id="current-view-title">
+                <i class="fa-regular fa-comments" style="color: var(--primary)"></i> 
+                <span>Secure Chat</span>
+            </div>
+            <div class="status-badge" id="connectionStatus">
+                <span class="status-dot"></span> Chưa kết nối
+            </div>
+        </header>
+
+        <!-- VIEW 1: CHAT INTERFACE -->
+        <section class="view-section chat-layout active" id="view-chat">
+            <!-- Sidebar cấu hình -->
+            <div class="chat-sidebar">
+                <div class="config-card">
+                    <div class="user-profile">
+                        <div class="avatar-container">
+                            <!-- Anime/Hacker GIF for aesthetics -->
+                            <img src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExcTBoZjIzYXRscDVweHByenByenIyYjM4bDBwbnB4bXB4bXB4bXB4eCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/L5aC2N3jAWAiXUPOtH/giphy.gif" alt="Avatar" class="avatar-gif">
+                            <div class="online-dot"></div>
+                        </div>
+                        <div>
+                            <div style="font-weight: 600; font-size: 14px;" id="meTitle">Guest</div>
+                            <div style="font-size: 11px; color: var(--text-muted);">Trạng thái: Sẵn sàng</div>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label><i class="fa-solid fa-id-badge"></i> ID Của Tôi</label>
+                        <input id="userIdInput" type="text" placeholder="Nhập ID của bạn">
+                    </div>
+                    <div class="input-group">
+                        <label><i class="fa-solid fa-user-lock"></i> ID Người Nhận</label>
+                        <input id="peerIdInput" type="text" placeholder="Nhập ID người muốn chat">
+                    </div>
+                    <button class="btn btn-primary" id="connectBtn" type="button" style="width: 100%;">
+                        <i class="fa-solid fa-link"></i> Kết nối E2EE
+                    </button>
+                    <button class="btn" id="clearBtn" type="button" style="width: 100%; margin-top: 10px; background: transparent; border: 1px solid var(--border); color: var(--text-secondary);">
+                        <i class="fa-solid fa-trash-can"></i> Xóa lịch sử
+                    </button>
+                </div>
+            </div>
+
+            <!-- Khung Chat Chính -->
+            <div class="chat-main">
+                <div class="chat-header">
+                    <div class="avatar-container">
+                        <img src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExem56dzVzZ2F6dWUxbDZxeGszZmp4Zmp4Zmp4Zmp4Zmp4Zmp4Zmp4eiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/26tn33aiTi1jIGs4E/giphy.gif" alt="Peer" class="avatar-gif" style="width: 40px; height: 40px; border-color: var(--secondary);">
+                    </div>
+                    <div>
+                        <div style="font-weight: 600; font-size: 15px;" id="peerTitle">Chưa chọn người nhận</div>
+                        <div style="font-size: 12px; color: var(--accent-green);"><i class="fa-solid fa-lock"></i> End-to-End Encrypted</div>
+                    </div>
+                </div>
+
+                <!-- Unified Message Container -->
+                <div class="chat-messages" id="unifiedMessages">
+                    <div class="message-bubble system">
+                        <i class="fa-solid fa-shield-halved"></i> Luồng tin nhắn an toàn đã được kích hoạt. Tin nhắn mã hóa 2 chiều AES-256-CBC.
+                    </div>
+                </div>
+
+                <div class="chat-composer">
+                    <button class="btn" aria-label="Đính kèm file" style="background: transparent; color: var(--text-secondary); padding: 10px;"><i class="fa-solid fa-paperclip" aria-hidden="true"></i></button>
+                    <input type="text" id="messageInput" class="composer-input" placeholder="Nhập tin nhắn bí mật...">
+                    <button class="btn-send" id="sendBtn" type="button" disabled aria-label="Gửi tin nhắn">
+                        <i class="fa-solid fa-paper-plane" aria-hidden="true"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- VIEW 2: SERVER LAB -->
+        <section class="view-section" id="view-server">
+            <div class="server-lab-layout">
+                <!-- Cột trái: Stats & Flow -->
+                <div style="display: flex; flex-direction: column; gap: 20px;">
+                    <div class="card">
+                        <h3 class="card-title"><i class="fa-solid fa-chart-line"></i> Server Metrics</h3>
+                        <div class="stats-grid">
+                            <div class="stat-box">
+                                <div class="value" id="packetCount">0</div>
+                                <div class="label">Tổng Packets</div>
+                            </div>
+                            <div class="stat-box">
+                                <div class="value" id="keyStatus" style="color: var(--primary); font-size: 16px; margin-top: 8px;">-</div>
+                                <div class="label">Public Key</div>
+                            </div>
+                            <div class="stat-box">
+                                <div class="value" id="realAckCount" style="color: var(--accent-green);">0</div>
+                                <div class="label">Thành công (ACK)</div>
+                            </div>
+                            <div class="stat-box">
+                                <div class="value" id="realNackCount" style="color: var(--accent-red);">0</div>
+                                <div class="label">Từ chối (NACK)</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card" style="flex: 1;">
+                        <h3 class="card-title"><i class="fa-solid fa-list-check"></i> Server Flow Log</h3>
+                        <ol id="serverFlow" style="list-style: none; padding: 0; margin: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; font-size: 12px;"></ol>
+                    </div>
+                </div>
+
+                <!-- Cột phải: JSON & Attack -->
+                <div style="display: flex; flex-direction: column; gap: 20px;">
+                    <div class="card">
+                        <h3 class="card-title"><i class="fa-solid fa-bug"></i> Trình giả lập tấn công (Attack Lab)</h3>
+                        <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 15px;">Sử dụng các nút dưới đây để can thiệp vào gói tin trước khi gửi lên mạng, kiểm tra khả năng bắt lỗi của người nhận.</p>
+                        <div class="attack-grid">
+                            <button class="btn btn-danger" id="sendTamperedBtn" type="button" disabled><i class="fa-solid fa-file-waveform"></i> Sửa Ciphertext</button>
+                            <button class="btn btn-danger" id="sendBadSignatureBtn" type="button" disabled><i class="fa-solid fa-signature"></i> Sai chữ ký RSA</button>
+                            <button class="btn btn-danger" id="sendExpiredBtn" type="button" disabled><i class="fa-solid fa-clock-rotate-left"></i> Gói tin hết hạn</button>
+                            <button class="btn btn-danger" id="replayRealBtn" type="button" disabled><i class="fa-solid fa-repeat"></i> Replay Attack</button>
+                        </div>
+                    </div>
+
+                    <div class="card" style="flex: 1;">
+                        <h3 class="card-title"><i class="fa-solid fa-code"></i> Packet JSON Relay</h3>
+                        <pre class="json-preview" id="realPacketPreview">{}</pre>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- VIEW 3: PEER VIEW (Giả lập màn hình người nhận) -->
+        <section class="view-section" id="view-peer" style="padding: 30px; display: none;">
+            <div class="card" style="max-width: 600px; margin: 0 auto; width: 100%;">
+                <h3 class="card-title"><i class="fa-solid fa-users-viewfinder"></i> Peer Client</h3>
+                <p style="font-size: 14px; color: var(--text-secondary); margin-bottom: 20px;">
+                    Khu vực này đại diện cho màn hình của người nhận trong quá trình Test trên cùng 1 trình duyệt.
+                </p>
+                <div style="background-color: var(--bg-app); border-radius: 12px; border: 1px solid var(--border); height: 300px; padding: 15px; overflow-y: auto; margin-bottom: 20px;" id="peerMessagesVisual">
+                    <!-- Sẽ clone tin nhắn peer vào đây để xem -->
+                </div>
+                <button class="btn btn-outline" id="loadServerLogBtn" type="button" style="width: 100%; border: 1px solid var(--border); color: white; padding: 12px; background: transparent; cursor: pointer; border-radius: 8px;">
+                    <i class="fa-solid fa-download"></i> Tải Security Events từ Server
+                </button>
+            </div>
+        </section>
+
+    </div>
+
+    <!-- ẨN CÁC PHẦN TỬ CỦA REAL_CHAT.JS NHƯNG VẪN GIỮ ĐỂ CODE JS HOẠT ĐỘNG -->
+    <div class="hidden-legacy">
+        <div id="localMessages"></div>
+        <div id="peerMessages"></div>
+        <div id="meAvatar"></div>
+        <div id="peerAvatar"></div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="/vendor/forge.min.js"></script>
+    <script src="/static/js/crypto_utils.js"></script>
+    <script src="/static/js/real_chat.js"></script>
+
+    <!-- UI Logic & Menu Switching -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Xử lý chuyển Tabs/Views
+            const menuItems = document.querySelectorAll('.menu-item[data-view]');
+            const views = document.querySelectorAll('.view-section');
+            const titleSpan = document.querySelector('#current-view-title span');
+            const titleIcon = document.querySelector('#current-view-title i');
+
+            const viewTitles = {
+                'view-chat': { text: 'Secure Chat', icon: 'fa-comments' },
+                'view-server': { text: 'Server Relay & Attack Lab', icon: 'fa-server' },
+                'view-peer': { text: 'Peer Receiver', icon: 'fa-users-viewfinder' }
+            };
+
+            menuItems.forEach(item => {
+                item.addEventListener('click', () => {
+                    // Xóa active menu
+                    menuItems.forEach(m => m.classList.remove('active'));
+                    item.classList.add('active');
+
+                    // Ẩn tất cả view
+                    views.forEach(v => v.classList.remove('active'));
+                    
+                    // Hiển thị view được chọn
+                    const viewId = item.getAttribute('data-view');
+                    document.getElementById(viewId).classList.add('active');
+
+                    // Cập nhật Title
+                    titleSpan.textContent = viewTitles[viewId].text;
+                    titleIcon.className = `fa-solid ${viewTitles[viewId].icon}`;
+                });
+            });
+
+            // Gắn sự kiện Enter cho ô nhập tin nhắn
+            const messageInput = document.getElementById('messageInput');
+            const sendBtn = document.getElementById('sendBtn');
+            messageInput.addEventListener('keypress', function (e) {
+                if (e.key === 'Enter') {
+                    sendBtn.click();
+                }
+            });
+
+            // Xử lý dọn dẹp view mới khi bấm Xóa
+            const clearBtn = document.getElementById('clearBtn');
+            if (clearBtn) {
+                clearBtn.addEventListener('click', () => {
+                    const unifiedMessages = document.getElementById('unifiedMessages');
+                    const peerMessagesVisual = document.getElementById('peerMessagesVisual');
+                    if (unifiedMessages) {
+                        unifiedMessages.innerHTML = `
+                            <div class="message-bubble system">
+                                <i class="fa-solid fa-shield-halved"></i> Luồng tin nhắn an toàn đã được kích hoạt. Tin nhắn mã hóa 2 chiều AES-256-CBC.
+                            </div>
+                        `;
+                    }
+                    if (peerMessagesVisual) {
+                        peerMessagesVisual.innerHTML = '';
+                    }
+                });
+            }
+
+            // Đồng bộ tin nhắn từ local/peer ẩn sang màn hình chính Unified
+            const localMessages = document.getElementById('localMessages');
+            const peerMessages = document.getElementById('peerMessages');
+            const unifiedMessages = document.getElementById('unifiedMessages');
+            const peerMessagesVisual = document.getElementById('peerMessagesVisual');
+
+            const escapeHTML = (str) => {
+                const div = document.createElement('div');
+                div.textContent = str;
+                return div.innerHTML;
+            };
+
+            const createUnifiedBubble = (node, isMine) => {
+                const text = node.querySelector('span')?.textContent || node.textContent;
+                const sender = node.querySelector('strong')?.textContent || '';
+                
+                const bubble = document.createElement('div');
+                
+                if (node.classList.contains('system')) {
+                    bubble.className = 'message-bubble system';
+                    bubble.innerHTML = `<i class="fa-solid fa-circle-info"></i> ${escapeHTML(text)}`;
+                } else {
+                    bubble.className = `message-bubble ${isMine ? 'mine' : 'peer'}`;
+                    bubble.innerHTML = `
+                        <div class="message-sender">${escapeHTML(sender)}</div>
+                        <div>${escapeHTML(text)}</div>
+                    `;
+                }
+                return bubble;
+            };
+
+            const observer = new MutationObserver((mutations) => {
+                mutations.forEach((mutation) => {
+                    if (mutation.addedNodes.length > 0) {
+                        mutation.addedNodes.forEach(node => {
+                            if (node.nodeType === 1 && node.classList.contains('bubble')) {
+                                // Xác định nguồn
+                                const isMine = node.classList.contains('mine');
+                                
+                                // Thêm vào Unified Chat
+                                const unifiedClone = createUnifiedBubble(node, isMine);
+                                unifiedMessages.appendChild(unifiedClone);
+                                unifiedMessages.scrollTop = unifiedMessages.scrollHeight;
+
+                                // Nếu là của peer, thêm vào màn hình peer visual
+                                if (!isMine && !node.classList.contains('system')) {
+                                    const peerClone = createUnifiedBubble(node, false);
+                                    peerMessagesVisual.appendChild(peerClone);
+                                    peerMessagesVisual.scrollTop = peerMessagesVisual.scrollHeight;
+                                }
+                            }
+                        });
+                    }
+                });
+            });
+
+            observer.observe(localMessages, { childList: true });
+            observer.observe(peerMessages, { childList: true });
+
+            // Ghi đè hàm addServerStep để đổ vào danh sách OL đẹp hơn
+            if (typeof window.addServerStep === 'function') {
+                window.addServerStep = function(title, detail, type = "success") {
+                    const list = document.getElementById('serverFlow');
+                    const item = document.createElement("li");
+                    
+                    let color = 'var(--accent-green)';
+                    let icon = 'fa-check-circle';
+                    if (type === 'error') { color = 'var(--accent-red)'; icon = 'fa-circle-xmark'; }
+                    if (type === 'warn') { color = 'var(--accent-yellow)'; icon = 'fa-triangle-exclamation'; }
+
+                    item.style.padding = '12px';
+                    item.style.backgroundColor = 'var(--bg-app)';
+                    item.style.borderRadius = '8px';
+                    item.style.borderLeft = `4px solid ${color}`;
+                    item.style.animation = 'fadeInView 0.3s ease';
+
+                    item.innerHTML = `
+                        <strong style="display: flex; align-items: center; gap: 8px; color: ${color}; margin-bottom: 4px;">
+                            <i class="fa-solid ${icon}"></i> ${escapeHTML(title)}
+                        </strong>
+                        <div style="color: var(--text-secondary); line-height: 1.4;">${escapeHTML(detail)}</div>
+                    `;
+                    list.prepend(item);
+                };
+            }
+
+            // Ghi đè hàm trạng thái
+            if (typeof window.setRealStatus === 'function') {
+                window.setRealStatus = function(text) {
+                    const badge = document.getElementById('connectionStatus');
+                    badge.innerHTML = `<span class="status-dot"></span> ${escapeHTML(text)}`;
+                    if (text.includes('Online') || text.includes('Registered')) {
+                        badge.classList.add('connected');
+                    } else {
+                        badge.classList.remove('connected');
+                    }
+                };
+            }
+        });
+    </script>
+</body>
+</html>

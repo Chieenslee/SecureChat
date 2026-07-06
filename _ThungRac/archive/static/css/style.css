@@ -1,0 +1,132 @@
+/* =====================================================
+   Secure Chat Pro – Global Stylesheet
+   Dark professional theme with CSS custom properties
+   ===================================================== */
+
+:root {
+    --font-main: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+    /* Backgrounds */
+    --bg-app:       #0f0f1a;
+    --bg-header:    #14141f;
+    --bg-sidebar:   #17172a;
+    --bg-chat:      #1c1c30;
+    --bg-input:     #111120;
+    --bg-message-in:#1e2038;
+
+    /* Text */
+    --text-primary:   #e8e8f0;
+    --text-secondary: #9898b2;
+    --text-muted:     #5a5a78;
+    --text-msg-in:    #d0d0e8;
+    --text-msg-out:   #ffffff;
+
+    /* Borders */
+    --border:       #252545;
+    --border-light: #2e2e50;
+
+    /* Brand colors */
+    --primary:      #6c63ff;
+    --primary-dark: #4e46d9;
+    --secondary:    #00c896;
+
+    /* Accent / semantic */
+    --accent-green:  #00c896;
+    --accent-red:    #ff4d6d;
+    --accent-yellow: #ffd166;
+
+    /* Shadows */
+    --shadow-sm: 0 2px 8px rgba(0,0,0,0.4);
+    --shadow-lg: 0 8px 40px rgba(0,0,0,0.6);
+}
+
+/* ── Reset & Base ────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+
+html { height: 100%; }
+
+body {
+    margin: 0;
+    font-family: var(--font-main);
+    background-color: var(--bg-app);
+    color: var(--text-primary);
+    line-height: 1.5;
+}
+
+a { color: var(--primary); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* ── Scrollbar ───────────────────────────────────── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--primary); }
+
+/* ── Status dot used inside .status-badge ────────── */
+.status-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: var(--accent-yellow);
+    animation: pulse 2s infinite;
+}
+
+.status-badge.connected .status-dot {
+    background-color: var(--accent-green);
+    animation: none;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+}
+
+/* ── Utility ─────────────────────────────────────── */
+.text-muted { color: var(--text-muted); font-size: 12px; }
+
+/* ── Home page (index) ───────────────────────────── */
+.landing {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 60px 24px;
+}
+
+.landing h1 {
+    font-size: 36px;
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--primary), var(--accent-green));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin: 0 0 12px;
+}
+
+.landing p {
+    color: var(--text-secondary);
+    font-size: 16px;
+    margin-bottom: 48px;
+}
+
+.card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 20px;
+}
+
+.card {
+    background-color: var(--bg-sidebar);
+    border: 1px solid var(--border-light);
+    border-radius: 12px;
+    padding: 24px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.card:hover {
+    border-color: var(--primary);
+    box-shadow: 0 0 20px rgba(108, 99, 255, 0.15);
+}
+
+.card h2 { margin: 0 0 8px; font-size: 18px; color: var(--text-primary); }
+.card p  { margin: 0 0 16px; font-size: 13px; color: var(--text-secondary); }
+.card a  { font-size: 13px; font-weight: 600; color: var(--primary); }

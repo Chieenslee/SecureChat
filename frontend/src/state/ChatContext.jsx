@@ -17,7 +17,7 @@ import {
   verifyIntegrityHash,
   verifySignature
 } from "../secureCrypto.js";
-import { apiGet, apiPatch, apiPost, readApiError } from "../services/api.js";
+import { apiGet, apiPatch, apiPost, apiDelete, readApiError } from "../services/api.js";
 
 const TOKEN_KEY = "secure_chat_token";
 const USER_KEY = "secure_chat_user";
@@ -220,6 +220,19 @@ export function ChatProvider({ children }) {
       await apiPost("/api/friend-requests/reject", { request_id: requestId }, token);
       setNotice("Đã từ chối lời mời.");
       await refreshLists();
+    } catch (error) {
+      setNotice(readApiError(error));
+    }
+  }
+
+  async function removeFriend(friendId) {
+    try {
+      await apiDelete(`/api/friends/${encodeURIComponent(friendId)}`, token);
+      setFriends(prev => prev.filter(f => f.chat_id !== friendId));
+      if (activeFriend?.chat_id === friendId) {
+        setActiveFriend(null);
+      }
+      setNotice("Đã xóa kết bạn.");
     } catch (error) {
       setNotice(readApiError(error));
     }
@@ -486,6 +499,7 @@ export function ChatProvider({ children }) {
     sendFriendRequest,
     acceptRequest,
     rejectRequest,
+    removeFriend,
     updateProfile,
     sendMessage,
     getPublicKeys,

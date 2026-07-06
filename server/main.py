@@ -139,6 +139,16 @@ async def friends(request: Request):
     return {"friends": [sanitize_user(item) for item in storage.list_friends(chat_id)]}
 
 
+@app.delete("/api/friends/{friend_id}")
+async def delete_friend_api(friend_id: str, request: Request):
+    chat_id = auth.get_current_chat_id(request)
+    success = storage.delete_friend(chat_id, friend_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="Friendship not found")
+    ws_handler.log_event("friend_deleted", user1=chat_id, user2=friend_id)
+    return {"status": "success"}
+
+
 @app.post("/api/friend-requests")
 async def create_friend_request(payload: FriendRequestCreate, request: Request):
     chat_id = auth.get_current_chat_id(request)

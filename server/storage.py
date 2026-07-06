@@ -437,6 +437,17 @@ def are_friends(first_id: str, second_id: str) -> bool:
     return bool(row)
 
 
+def delete_friend(first_id: str, second_id: str) -> bool:
+    user_a, user_b = normalize_pair(first_id, second_id)
+    with _db_lock:
+        with _connect() as conn:
+            cursor = conn.execute(
+                "DELETE FROM friendships WHERE user_a = ? AND user_b = ?",
+                (user_a, user_b),
+            )
+            return cursor.rowcount > 0
+
+
 def save_message(packet: Dict[str, Any], status: str, explicit_recipient: Optional[str] = None) -> int:
     now = _utc_now()
     recip = explicit_recipient or packet["recipient"]

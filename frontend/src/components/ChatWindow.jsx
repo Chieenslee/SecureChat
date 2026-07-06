@@ -2,10 +2,10 @@ import { useEffect, useRef } from "react";
 import { Composer } from "./Composer.jsx";
 import { MessageBubble } from "./MessageBubble.jsx";
 import { useChat } from "../state/ChatContext.jsx";
-import { ChevronLeft, Search, Menu, MessageSquare } from 'lucide-react';
+import { ChevronLeft, Search, Menu, MessageSquare, UserMinus } from 'lucide-react';
 
 export function ChatWindow() {
-  const { activeFriend, activeMessages, setActiveFriend, setGroupInfoOpen, friends } = useChat();
+  const { activeFriend, activeMessages, setActiveFriend, setGroupInfoOpen, friends, removeFriend } = useChat();
   const bottomRef = useRef(null);
   
   const isGroup = activeFriend?.chat_id?.startsWith("group:");
@@ -38,6 +38,22 @@ export function ChatWindow() {
           <span>{activeFriend.chat_id} · Mã hóa E2EE đang bật</span>
         </div>
         <div className="chat-actions" style={{ marginLeft: 'auto', display: 'flex', gap: '8px' }}>
+          {!isGroup && (
+            <button 
+              className="icon-button" 
+              style={{ color: '#ef4444', marginRight: '4px' }} 
+              aria-label="Xóa bạn" 
+              title="Xóa kết bạn"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (window.confirm(`Bạn có chắc muốn xóa kết bạn với ${activeFriend.display_name || activeFriend.username}?`)) {
+                  removeFriend(activeFriend.chat_id);
+                }
+              }}
+            >
+              <UserMinus size={20} />
+            </button>
+          )}
           <button className="icon-button" aria-label="Tìm kiếm" title="Tìm kiếm"><Search size={20} /></button>
           <button className="icon-button" aria-label="Thêm" title="Thêm"><Menu size={20} /></button>
         </div>

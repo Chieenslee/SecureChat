@@ -155,8 +155,9 @@ export function ChatProvider({ children }) {
 
   function connectSocket(authToken) {
     wsRef.current?.close();
-    const wsProtocol = window.location.protocol === "https:" ? "wss" : "ws";
-    const ws = new WebSocket(`${wsProtocol}://${window.location.host}/ws?token=${encodeURIComponent(authToken)}`);
+    const defaultWsUrl = `${window.location.protocol === "https:" ? "wss" : "ws"}://${window.location.host}/ws`;
+    const wsUrl = import.meta.env.VITE_WS_URL || defaultWsUrl;
+    const ws = new WebSocket(`${wsUrl}?token=${encodeURIComponent(authToken)}`);
     wsRef.current = ws;
     ws.onopen = () => setStatus("online");
     ws.onclose = () => setStatus("offline");

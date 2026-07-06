@@ -28,9 +28,14 @@ app = FastAPI(title="Secure Chat App")
 storage.init_db()
 ADMIN_USERNAMES = {"ADMIN", "admin"}
 ADMIN_CHAT_IDS = {item.strip() for item in os.environ.get("SECURE_CHAT_ADMIN_CHAT_IDS", "").split(",") if item.strip()}
+allowed_origins_env = os.environ.get("ALLOWED_ORIGINS", "")
+allowed_origins = ["http://127.0.0.1:5173", "http://localhost:5173"]
+if allowed_origins_env:
+    allowed_origins.extend([origin.strip() for origin in allowed_origins_env.split(",") if origin.strip()])
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://127.0.0.1:5173", "http://localhost:5173"],
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
